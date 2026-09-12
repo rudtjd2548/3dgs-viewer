@@ -1,7 +1,8 @@
+import { Suspense } from 'react'
 import { Canvas, extend } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import type { ThreeToJSXElements } from '@react-three/fiber'
 import * as THREE from 'three/webgpu'
+import { Scene } from './Scene'
 
 declare module '@react-three/fiber' {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
@@ -13,7 +14,7 @@ export function ViewerCanvas() {
   return (
     <Canvas
       className="h-full w-full"
-      camera={{ position: [3, 2, 4], fov: 50 }}
+      camera={{ position: [3, 2, 4], fov: 50, near: 0.1, far: 10000 }}
       gl={async ({ canvas, antialias }) => {
         const renderer = new THREE.WebGPURenderer({
           canvas: canvas as HTMLCanvasElement,
@@ -25,11 +26,9 @@ export function ViewerCanvas() {
       }}
     >
       <color attach="background" args={['#0a0a0a']} />
-      <mesh>
-        <boxGeometry />
-        <meshBasicNodeMaterial color="#8a8a8a" />
-      </mesh>
-      <OrbitControls makeDefault />
+      <Suspense fallback={null}>
+        <Scene />
+      </Suspense>
     </Canvas>
   )
 }
