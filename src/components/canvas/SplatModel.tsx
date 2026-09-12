@@ -24,13 +24,15 @@ export function SplatModel({ url }: SplatModelProps) {
       (geometry) => {
         if (cancelled) return
         splat = new GaussianSplat(geometry)
+        splat.rotation.x = -Math.PI / 2
         scene.add(splat)
+        splat.updateMatrixWorld()
 
-        // 로더가 이미 채워 둔 구. fov 절반각으로 전체가 들어오게 거리 계산
+        // Z-up PLY → Y-up 월드. 회전 후 중심으로 프레이밍
         const sphere = splat.splatGeometry.boundingSphere
         if (sphere && controls) {
-          const { center, radius } = sphere
-          const dist = radius / Math.sin((camera.fov * Math.PI) / 360)
+          const center = sphere.center.clone().applyMatrix4(splat.matrixWorld)
+          const dist = sphere.radius / Math.sin((camera.fov * Math.PI) / 360)
           camera.position.set(center.x, center.y, center.z + dist)
           camera.lookAt(center)
           controls.target.copy(center)
