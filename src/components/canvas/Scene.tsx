@@ -1,11 +1,13 @@
 import { OrbitControls } from '@react-three/drei'
-import { DEFAULT_PLY_URL } from '../../lib/loadSplat'
+import { useLoadStore } from '../../store/useLoadStore'
 import { SplatModel } from './SplatModel'
 
 export function Scene() {
+  const plyUrl = useLoadStore((s) => s.plyUrl)
+
   return (
     <>
-      <SplatModel url={DEFAULT_PLY_URL} />
+      {plyUrl && <SplatModel url={plyUrl} />}
       <OrbitControls makeDefault />
     </>
   )
