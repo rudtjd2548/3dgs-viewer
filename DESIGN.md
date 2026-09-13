@@ -96,7 +96,7 @@ FPS·메모리 프로파일은 찍지 않았다. 숫자 없이 선택만 적는�
 - 픽은 전체 화면이 아니라 커서 1px scissor. splat 크기는 RT 해상도에 묶이므로 화면 크기는 유지한다.
 - `dpr=[1,1]`, antialias off. splat fill을 우선했다.
 - PLY는 메인 스레드 로드. 첫 대기와 파일 교체 시 버벅임은 여기로 본다. Worker/LOD/프로그레시브는 없음.
-- 파일 교체 때 splat geometry `dispose`는 하지 않는다. 같은 세션에서 PLY를 여러 번 바꾸면 GPU 메모리가 남을 수 있다.
+- 파일 교체·언마운트 때 splat 쿼드·재질·원본 `splatGeometry`를 `dispose`한다.
 
 ## 참고 UX와의 차이
 

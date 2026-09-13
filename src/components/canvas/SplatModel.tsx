@@ -23,7 +23,10 @@ export function SplatModel({ url }: SplatModelProps) {
     new GaussianSplatPLYLoader().load(
       url,
       (geometry) => {
-        if (cancelled) return
+        if (cancelled) {
+          geometry.dispose()
+          return
+        }
         splat = new GaussianSplat(geometry)
         splat.rotation.x = -Math.PI / 2
         splat.raycast = () => {}
@@ -59,7 +62,11 @@ export function SplatModel({ url }: SplatModelProps) {
     return () => {
       cancelled = true
       if (splatRef.current === splat) splatRef.current = null
-      if (splat) scene.remove(splat)
+      if (!splat) return
+      scene.remove(splat)
+      splat.geometry.dispose()
+      splat.material.dispose()
+      splat.splatGeometry.dispose()
     }
   }, [url, scene, camera, controls])
 
