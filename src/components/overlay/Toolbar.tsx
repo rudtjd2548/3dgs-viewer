@@ -1,16 +1,24 @@
-import { Axis3d, Eye, EyeOff, Ruler } from "lucide-react";
+import { Axis3d, CircleHelp, Eye, EyeOff, Ruler } from "lucide-react";
 import { useToolStore } from "../../store/useToolStore";
 
 const btn = (on: boolean) =>
-  `grid size-10 place-items-center rounded-lg transition ${
+  `grid size-10 cursor-pointer place-items-center rounded-lg transition ${
     on
       ? "bg-white text-neutral-900"
       : "bg-neutral-900/80 text-neutral-400 hover:text-white"
   }`;
 
 export function Toolbar() {
-  const { tool, showAxes, showMeasurements, setTool, toggleAxes, toggleMeasurements } =
-    useToolStore();
+  const {
+    tool,
+    showAxes,
+    showMeasurements,
+    showGuide,
+    setTool,
+    toggleAxes,
+    toggleMeasurements,
+    toggleGuide,
+  } = useToolStore();
   const measuring = tool === "distance";
 
   return (
@@ -39,7 +47,7 @@ export function Toolbar() {
       </button>
       <button
         type="button"
-        className={btn(!showMeasurements)}
+        className={btn(showMeasurements)}
         title="측정 표시/숨김"
         onClick={(e) => {
           e.currentTarget.blur();
@@ -47,6 +55,17 @@ export function Toolbar() {
         }}
       >
         {showMeasurements ? <Eye size={18} /> : <EyeOff size={18} />}
+      </button>
+      <button
+        type="button"
+        className={btn(showGuide)}
+        title="조작 가이드"
+        onClick={(e) => {
+          e.currentTarget.blur();
+          toggleGuide();
+        }}
+      >
+        <CircleHelp size={18} />
       </button>
     </div>
   );
