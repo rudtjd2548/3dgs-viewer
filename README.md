@@ -2,6 +2,10 @@
 
 제공 PLY를 브라우저에서 보고, 화면을 찍어 거리·면적을 잰다. Chrome 최신 (WebGPU).
 
+**데모:** https://3dgs-viewer-eight.vercel.app/
+
+배포본에는 샘플 PLY가 없다. 과제에서 받은 `sample_scene.ply`를 파일 선택으로 연다.
+
 ## 실행
 
 ```bash
