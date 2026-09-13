@@ -6,7 +6,8 @@ type PickState = {
   hover: Vector3
   hoverOn: boolean
   setHoverOn: (on: boolean) => void
-  points: Vector3[]
+  draft: Vector3[]
+  sessions: Vector3[][]
   addPoint: (v: Vector3) => void
 }
 
@@ -14,6 +15,7 @@ export const usePickStore = create<PickState>((set) => ({
   hover: new Vector3(),
   hoverOn: false,
   setHoverOn: (hoverOn) => set((s) => (s.hoverOn === hoverOn ? s : { hoverOn })),
-  points: [],
-  addPoint: (v) => set((s) => ({ points: [...s.points, v.clone()] })),
+  draft: [],
+  sessions: [],
+  addPoint: (v) => set((s) => ({ draft: [...s.draft, v.clone()] })),
 }))

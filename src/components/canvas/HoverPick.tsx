@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
-import type { Group, PerspectiveCamera, WebGPURenderer } from "three/webgpu";
+import type { PerspectiveCamera, WebGPURenderer } from "three/webgpu";
 import { Matrix4 } from "three/webgpu";
 import { usePickStore } from "../../store/usePickStore";
 import {
@@ -42,14 +41,10 @@ export function HoverPick() {
   const size = useThree((s) => s.size);
   const ptr = useRef({ x: 0, y: 0, on: false, dirty: false });
   const bag = useRef<Bag | null>(null);
-  const hoverOn = usePickStore((s) => s.hoverOn);
 
   useEffect(() => {
     const el = gl.domElement;
     const p = ptr.current;
-    const CLICK = 5;
-    let down: { x: number; y: number } | null = null;
-
     const move = (e: PointerEvent) => {
       p.x = e.offsetX;
       p.y = e.offsetY;
@@ -57,32 +52,15 @@ export function HoverPick() {
       p.dirty = true;
     };
     const leave = () => {
-      down = null;
       p.on = false;
       p.dirty = false;
       usePickStore.getState().setHoverOn(false);
     };
-    const pointerdown = (e: PointerEvent) => {
-      if (e.button === 0) down = { x: e.offsetX, y: e.offsetY };
-    };
-    const pointerup = (e: PointerEvent) => {
-      if (!down || e.button !== 0) return;
-      const dx = e.offsetX - down.x;
-      const dy = e.offsetY - down.y;
-      down = null;
-      if (dx * dx + dy * dy > CLICK * CLICK) return;
-      const { hoverOn, hover, addPoint } = usePickStore.getState();
-      if (hoverOn) addPoint(hover);
-    };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", leave);
-    el.addEventListener("pointerdown", pointerdown);
-    el.addEventListener("pointerup", pointerup);
     return () => {
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerleave", leave);
-      el.removeEventListener("pointerdown", pointerdown);
-      el.removeEventListener("pointerup", pointerup);
       bag.current?.rt.dispose();
       bag.current = null;
       gl.setScissorTest(false);
@@ -153,40 +131,5 @@ export function HoverPick() {
     });
   });
 
-  return (
-    <>
-      {hoverOn && <HoverDot />}
-      <Pins />
-    </>
-  );
-}
-
-function Pins() {
-  const points = usePickStore((s) => s.points);
-  return points.map((p, i) => (
-    <Html key={i} position={p} center sprite style={{ pointerEvents: "none" }}>
-      <div className="size-2.5 rounded-full bg-white shadow-[0_0_0_2px_#052]" />
-    </Html>
-  ));
-}
-
-function HoverDot() {
-  const obj = useRef<Group>(null);
-
-  useFrame(() => {
-    obj.current?.position.copy(usePickStore.getState().hover);
-  });
-
-  return (
-    <group
-      ref={(g) => {
-        obj.current = g;
-        if (g) g.position.copy(usePickStore.getState().hover);
-      }}
-    >
-      <Html center sprite style={{ pointerEvents: "none" }}>
-        <div className="size-3 rounded-full bg-[#22ff88] shadow-[0_0_0_2px_#052]" />
-      </Html>
-    </group>
-  );
+  return null;
 }
