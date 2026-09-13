@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Locate, Pentagon, Spline, Trash2 } from "lucide-react";
 import {
   isClosed,
+  sessionMetric,
   useMeasureStore,
   type MeasureSession,
 } from "../../store/useMeasureStore";
@@ -46,7 +47,7 @@ function SessionRow({ session }: { session: MeasureSession }) {
   };
 
   return (
-    <li className="grid grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-2 px-2.5 py-1.5">
+    <li className="grid grid-cols-[1rem_minmax(0,1fr)_auto_auto] items-center gap-2 px-2.5 py-1.5">
       {closed ? (
         <Pentagon size={14} className="text-[#22ff88]" />
       ) : (
@@ -89,6 +90,9 @@ function SessionRow({ session }: { session: MeasureSession }) {
           {session.name}
         </button>
       )}
+      <span className="text-xs tabular-nums text-neutral-400">
+        {sessionMetric(session.points) ?? "—"}
+      </span>
       <div className="flex">
         <button
           type="button"

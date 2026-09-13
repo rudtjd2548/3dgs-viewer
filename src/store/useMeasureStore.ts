@@ -7,8 +7,51 @@ export type MeasureSession = {
   points: Vector3[]
 }
 
+/** 월드 단위 → m. 실측 보정 전 1:1 */
+export const WORLD_TO_METER = 1
+
 export const isClosed = (pts: Vector3[]) =>
   pts.length >= 4 && pts[0]!.equals(pts[pts.length - 1]!)
+
+export function pathLength(pts: Vector3[]) {
+  let sum = 0
+  for (let i = 1; i < pts.length; i++) sum += pts[i - 1]!.distanceTo(pts[i]!)
+  return sum * WORLD_TO_METER
+}
+
+export function polygonArea(pts: Vector3[]) {
+  const n = pts.length
+  if (n < 3) return null
+  const normal = new Vector3()
+  for (let i = 0; i < n; i++) {
+    const a = pts[i]!
+    const b = pts[(i + 1) % n]!
+    normal.x += (a.y - b.y) * (a.z + b.z)
+    normal.y += (a.z - b.z) * (a.x + b.x)
+    normal.z += (a.x - b.x) * (a.y + b.y)
+  }
+  if (normal.lengthSq() < 1e-20) return null
+  normal.normalize()
+  const u = new Vector3(+(Math.abs(normal.x) < 0.9), +(Math.abs(normal.x) >= 0.9), 0)
+    .cross(normal)
+    .normalize()
+  const v = new Vector3().copy(normal).cross(u)
+  let twice = 0
+  for (let i = 0; i < n; i++) {
+    const a = pts[i]!
+    const b = pts[(i + 1) % n]!
+    twice += a.dot(u) * b.dot(v) - b.dot(u) * a.dot(v)
+  }
+  return Math.abs(twice) * 0.5 * WORLD_TO_METER * WORLD_TO_METER
+}
+
+export function sessionMetric(pts: Vector3[]) {
+  if (isClosed(pts)) {
+    const area = polygonArea(pts.slice(0, -1))
+    return area == null ? null : `${area.toFixed(2)}m²`
+  }
+  return `${pathLength(pts).toFixed(2)}m`
+}
 
 const session = (seq: number, points: Vector3[]): MeasureSession => ({
   id: crypto.randomUUID(),

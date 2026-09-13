@@ -11,10 +11,11 @@ import {
 import type { Camera, Group } from "three/webgpu";
 import { Line2 } from "three/addons/lines/webgpu/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
-import { isClosed, useMeasureStore } from "../../store/useMeasureStore";
-
-/** 월드 단위 → m. 실측 보정 전 1:1 */
-const WORLD_TO_METER = 1;
+import {
+  isClosed,
+  useMeasureStore,
+  WORLD_TO_METER,
+} from "../../store/useMeasureStore";
 const CLICK = 5;
 const CLOSE_PX = 16;
 
@@ -137,8 +138,13 @@ export function MeasureTool() {
     };
     const onClick = (e: MouseEvent) => {
       if (e.ctrlKey || e.detail > 1 || dragged) return;
-      const { draft: d, hoverOn: on, hover, addPoint, close } =
-        useMeasureStore.getState();
+      const {
+        draft: d,
+        hoverOn: on,
+        hover,
+        addPoint,
+        close,
+      } = useMeasureStore.getState();
       if (
         d.length >= 3 &&
         screenDist(
