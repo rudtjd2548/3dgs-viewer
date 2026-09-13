@@ -47,6 +47,9 @@ export function HoverPick() {
   useEffect(() => {
     const el = gl.domElement;
     const p = ptr.current;
+    const CLICK = 5;
+    let down: { x: number; y: number } | null = null;
+
     const move = (e: PointerEvent) => {
       p.x = e.offsetX;
       p.y = e.offsetY;
@@ -54,15 +57,32 @@ export function HoverPick() {
       p.dirty = true;
     };
     const leave = () => {
+      down = null;
       p.on = false;
       p.dirty = false;
       usePickStore.getState().setHoverOn(false);
     };
+    const pointerdown = (e: PointerEvent) => {
+      if (e.button === 0) down = { x: e.offsetX, y: e.offsetY };
+    };
+    const pointerup = (e: PointerEvent) => {
+      if (!down || e.button !== 0) return;
+      const dx = e.offsetX - down.x;
+      const dy = e.offsetY - down.y;
+      down = null;
+      if (dx * dx + dy * dy > CLICK * CLICK) return;
+      const { hoverOn, hover, addPoint } = usePickStore.getState();
+      if (hoverOn) addPoint(hover);
+    };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", leave);
+    el.addEventListener("pointerdown", pointerdown);
+    el.addEventListener("pointerup", pointerup);
     return () => {
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerleave", leave);
+      el.removeEventListener("pointerdown", pointerdown);
+      el.removeEventListener("pointerup", pointerup);
       bag.current?.rt.dispose();
       bag.current = null;
       gl.setScissorTest(false);
@@ -133,7 +153,21 @@ export function HoverPick() {
     });
   });
 
-  return hoverOn ? <HoverDot /> : null;
+  return (
+    <>
+      {hoverOn && <HoverDot />}
+      <Pins />
+    </>
+  );
+}
+
+function Pins() {
+  const points = usePickStore((s) => s.points);
+  return points.map((p, i) => (
+    <Html key={i} position={p} center sprite style={{ pointerEvents: "none" }}>
+      <div className="size-2.5 rounded-full bg-white shadow-[0_0_0_2px_#052]" />
+    </Html>
+  ));
 }
 
 function HoverDot() {
