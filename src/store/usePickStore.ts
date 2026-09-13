@@ -1,9 +1,10 @@
-import { Vector3 } from 'three/webgpu'
+import { Color, Vector3 } from 'three/webgpu'
 import { create } from 'zustand'
 
 type PickState = {
-  /** 커서 스냅. 좌표는 copy로 mutate, 구독은 hoverOn만 */
+  /** 커서 스냅. 좌표·색은 mutate, 구독은 hoverOn만 */
   hover: Vector3
+  hoverColor: Color
   hoverOn: boolean
   setHoverOn: (on: boolean) => void
   draft: Vector3[]
@@ -16,6 +17,7 @@ type PickState = {
 
 export const usePickStore = create<PickState>((set) => ({
   hover: new Vector3(),
+  hoverColor: new Color(),
   hoverOn: false,
   setHoverOn: (hoverOn) => set((s) => (s.hoverOn === hoverOn ? s : { hoverOn })),
   draft: [],

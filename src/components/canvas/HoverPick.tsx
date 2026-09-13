@@ -6,6 +6,7 @@ import { usePickStore } from "../../store/usePickStore";
 import {
   createPickTarget,
   readPick,
+  readPickColor,
   scenePickMRT,
   splatPickMRT,
   splatRef,
@@ -118,15 +119,20 @@ export function HoverPick() {
     }
 
     b.busy = true;
-    void gl.readRenderTargetPixelsAsync(b.rt, x, y, 1, 1).then((texel) => {
+    void Promise.all([
+      gl.readRenderTargetPixelsAsync(b.rt, x, y, 1, 1, 0),
+      gl.readRenderTargetPixelsAsync(b.rt, x, y, 1, 1, 1),
+    ]).then(([depth, color]) => {
       b.busy = false;
-      const { hover, setHoverOn } = usePickStore.getState();
-      const viewZ = readPick(texel);
-      if (viewZ === null || !ptr.current.on) {
+      const { hover, hoverColor, setHoverOn } = usePickStore.getState();
+      const viewZ = readPick(depth);
+      const rgb = readPickColor(color);
+      if (viewZ === null || rgb === null || !ptr.current.on) {
         setHoverOn(false);
         return;
       }
       hover.copy(unprojectView(cam, (x / w) * 2 - 1, 1 - (y / h) * 2, viewZ));
+      hoverColor.setRGB(...rgb);
       setHoverOn(true);
     });
   });

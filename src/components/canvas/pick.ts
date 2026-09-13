@@ -27,6 +27,7 @@ import {
 export const splatRef: { current: GaussianSplat | null } = { current: null }
 
 const PICK = 'pick'
+const COLOR = 'color'
 const _p = /*@__PURE__*/ new Vector3()
 
 const pickBlend = /*@__PURE__*/ (() => {
@@ -44,21 +45,29 @@ export function splatPickMRT(material: NodeMaterial) {
   const col = varyingProperty('vec4', 'vSplatColor')
   const alpha = exp(dot(uv, uv).mul(-0.5)).mul(col.a)
   const viewZ = perspectiveDepthToViewZ(vertexStage(clip.z.div(clip.w)), cameraNear, cameraFar)
-  return mrt({ [PICK]: vec4(viewZ.negate(), 0, 0, alpha) })
+  return mrt({
+    [PICK]: vec4(viewZ.negate(), 0, 0, alpha),
+    [COLOR]: vec4(col.rgb, alpha),
+  })
 }
 
 export function scenePickMRT() {
-  const node = mrt({ [PICK]: vec4(0) })
+  const node = mrt({ [PICK]: vec4(0), [COLOR]: vec4(0) })
   node.setBlendMode(PICK, pickBlend)
+  node.setBlendMode(COLOR, pickBlend)
   node.setClearColor(PICK, 0, 0)
+  node.setClearColor(COLOR, 0, 0)
   return node
 }
 
 export function createPickTarget() {
-  const rt = new RenderTarget(1, 1, { type: HalfFloatType })
+  const rt = new RenderTarget(1, 1, { type: HalfFloatType, count: 2 })
   rt.textures[0].name = PICK
-  rt.textures[0].minFilter = NearestFilter
-  rt.textures[0].magFilter = NearestFilter
+  rt.textures[1].name = COLOR
+  for (const t of rt.textures) {
+    t.minFilter = NearestFilter
+    t.magFilter = NearestFilter
+  }
   return rt
 }
 
@@ -68,6 +77,11 @@ const f = (texel: ArrayLike<number>, i: number) =>
 export function readPick(texel: ArrayLike<number>) {
   const a = f(texel, 3)
   return a < 0.04 ? null : f(texel, 0) / a
+}
+
+export function readPickColor(texel: ArrayLike<number>) {
+  const a = f(texel, 3)
+  return a < 0.04 ? null : ([f(texel, 0) / a, f(texel, 1) / a, f(texel, 2) / a] as const)
 }
 
 export function unprojectView(camera: PerspectiveCamera, ndcX: number, ndcY: number, viewZ: number) {

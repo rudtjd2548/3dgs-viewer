@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { BufferAttribute, BufferGeometry } from "three/webgpu";
+import { Line2NodeMaterial } from "three/webgpu";
 import type { Group, Vector3 } from "three/webgpu";
+import { Line2 } from "three/addons/lines/webgpu/Line2.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { usePickStore } from "../../store/usePickStore";
 
 /** 월드 단위 → m. 실측 보정 전 1:1 */
 const WORLD_TO_METER = 1;
 const CLICK = 5;
+
+const LINE_WIDTH = 2;
+const LINE_COLOR = "#fff";
+const GHOST_COLOR = "#22ff88";
+const GHOST_OPACITY = 0.45;
 
 export function Measure() {
   const gl = useThree((s) => s.gl);
@@ -21,7 +28,8 @@ export function Measure() {
     let dragged = false;
 
     const pointerdown = (e: PointerEvent) => {
-      if (e.button === 0 || e.button === 2) down = { x: e.offsetX, y: e.offsetY, button: e.button };
+      if (e.button === 0 || e.button === 2)
+        down = { x: e.offsetX, y: e.offsetY, button: e.button };
     };
     const pointerup = (e: PointerEvent) => {
       if (!down || e.button !== down.button) return;
@@ -76,7 +84,13 @@ export function Measure() {
       {paths.map((pts, si) => (
         <group key={si}>
           {pts.map((p, i) => (
-            <Html key={i} position={p} center sprite style={{ pointerEvents: "none" }}>
+            <Html
+              key={i}
+              position={p}
+              center
+              sprite
+              style={{ pointerEvents: "none" }}
+            >
               <div className="size-2.5 rounded-full bg-white shadow-[0_0_0_2px_#052]" />
             </Html>
           ))}
@@ -89,15 +103,43 @@ export function Measure() {
   );
 }
 
+function createFatLine(color: string, opacity = 1) {
+  const geometry = new LineGeometry();
+  geometry.setPositions([0, 0, 0, 0, 0, 0.001]);
+  const material = new Line2NodeMaterial({
+    color,
+    linewidth: LINE_WIDTH,
+    depthTest: false,
+    depthWrite: false,
+    transparent: true,
+    opacity,
+  });
+  const line = new Line2(geometry, material);
+  line.frustumCulled = false;
+  line.renderOrder = 10;
+  return line;
+}
+
+function setSeg(geom: LineGeometry, a: Vector3, b: Vector3) {
+  geom.attributes.instanceStart.setXYZ(0, a.x, a.y, a.z);
+  geom.attributes.instanceEnd.setXYZ(0, b.x, b.y, b.z);
+  geom.attributes.instanceStart.needsUpdate = true;
+}
+
 function Segment({ a, b }: { a: Vector3; b: Vector3 }) {
-  const geom = useMemo(() => new BufferGeometry().setFromPoints([a, b]), [a, b]);
-  useEffect(() => () => geom.dispose(), [geom]);
+  const line = useMemo(() => createFatLine(LINE_COLOR), []);
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      line.material.dispose();
+    },
+    [line],
+  );
+  useLayoutEffect(() => setSeg(line.geometry, a, b), [a, b, line]);
 
   return (
     <>
-      <line geometry={geom}>
-        <lineBasicMaterial color="#fff" depthTest={false} />
-      </line>
+      <primitive object={line} />
       <Html
         center
         sprite
@@ -115,36 +157,33 @@ function Segment({ a, b }: { a: Vector3; b: Vector3 }) {
 function Ghost() {
   const label = useRef<Group>(null);
   const text = useRef<HTMLDivElement>(null);
-  const geom = useMemo(() => {
-    const g = new BufferGeometry();
-    g.setAttribute("position", new BufferAttribute(new Float32Array(6), 3));
-    return g;
-  }, []);
+  const line = useMemo(() => createFatLine(GHOST_COLOR, GHOST_OPACITY), []);
 
-  useEffect(() => () => geom.dispose(), [geom]);
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      line.material.dispose();
+    },
+    [line],
+  );
 
   useFrame(() => {
     const { draft, hover } = usePickStore.getState();
     const a = draft[draft.length - 1];
     if (!a) return;
-    const attr = geom.getAttribute("position");
-    const pos = attr.array;
-    pos[0] = a.x;
-    pos[1] = a.y;
-    pos[2] = a.z;
-    pos[3] = hover.x;
-    pos[4] = hover.y;
-    pos[5] = hover.z;
-    attr.needsUpdate = true;
-    label.current?.position.set((a.x + hover.x) / 2, (a.y + hover.y) / 2, (a.z + hover.z) / 2);
-    if (text.current) text.current.textContent = `${(a.distanceTo(hover) * WORLD_TO_METER).toFixed(2)}m`;
+    setSeg(line.geometry, a, hover);
+    label.current?.position.set(
+      (a.x + hover.x) / 2,
+      (a.y + hover.y) / 2,
+      (a.z + hover.z) / 2,
+    );
+    if (text.current)
+      text.current.textContent = `${(a.distanceTo(hover) * WORLD_TO_METER).toFixed(2)}m`;
   });
 
   return (
     <>
-      <line geometry={geom}>
-        <lineBasicMaterial color="#22ff88" transparent opacity={0.45} depthTest={false} />
-      </line>
+      <primitive object={line} />
       <group ref={label}>
         <Html center sprite style={{ pointerEvents: "none" }}>
           <div
@@ -159,9 +198,13 @@ function Ghost() {
 
 function HoverDot() {
   const obj = useRef<Group>(null);
+  const ring = useRef<SVGSVGElement>(null);
 
   useFrame(() => {
-    obj.current?.position.copy(usePickStore.getState().hover);
+    const { hover, hoverColor } = usePickStore.getState();
+    obj.current?.position.copy(hover);
+    if (ring.current)
+      ring.current.style.color = `#${hoverColor.getHexString()}`;
   });
 
   return (
@@ -172,7 +215,36 @@ function HoverDot() {
       }}
     >
       <Html center sprite style={{ pointerEvents: "none" }}>
-        <div className="size-3 rounded-full bg-[#22ff88] shadow-[0_0_0_2px_#052]" />
+        <svg
+          ref={ring}
+          width="32"
+          height="32"
+          viewBox="0 0 32 32"
+          className="text-white"
+        >
+          <circle
+            cx="16"
+            cy="16"
+            r="10"
+            fill="none"
+            stroke="#052"
+            strokeWidth="5"
+          />
+          <circle
+            cx="16"
+            cy="16"
+            r="10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
+          <path
+            d="M16 8v3.5M24 16h-3.5M16 24v-3.5M8 16h3.5"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="1.25"
+          />
+        </svg>
       </Html>
     </group>
   );
