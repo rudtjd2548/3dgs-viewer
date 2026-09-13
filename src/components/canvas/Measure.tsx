@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { BufferGeometry } from "three/webgpu";
+import { BufferAttribute, BufferGeometry } from "three/webgpu";
 import type { Group, Vector3 } from "three/webgpu";
 import { usePickStore } from "../../store/usePickStore";
 
@@ -49,6 +49,7 @@ export function Measure() {
   return (
     <>
       {hoverOn && <HoverDot />}
+      {hoverOn && draft.length > 0 && <Ghost />}
       {paths.map((pts, si) => (
         <group key={si}>
           {pts.map((p, i) => (
@@ -84,6 +85,51 @@ function Segment({ a, b }: { a: Vector3; b: Vector3 }) {
           {(a.distanceTo(b) * WORLD_TO_METER).toFixed(2)}m
         </div>
       </Html>
+    </>
+  );
+}
+
+function Ghost() {
+  const label = useRef<Group>(null);
+  const text = useRef<HTMLDivElement>(null);
+  const geom = useMemo(() => {
+    const g = new BufferGeometry();
+    g.setAttribute("position", new BufferAttribute(new Float32Array(6), 3));
+    return g;
+  }, []);
+
+  useEffect(() => () => geom.dispose(), [geom]);
+
+  useFrame(() => {
+    const { draft, hover } = usePickStore.getState();
+    const a = draft[draft.length - 1];
+    if (!a) return;
+    const attr = geom.getAttribute("position");
+    const pos = attr.array;
+    pos[0] = a.x;
+    pos[1] = a.y;
+    pos[2] = a.z;
+    pos[3] = hover.x;
+    pos[4] = hover.y;
+    pos[5] = hover.z;
+    attr.needsUpdate = true;
+    label.current?.position.set((a.x + hover.x) / 2, (a.y + hover.y) / 2, (a.z + hover.z) / 2);
+    if (text.current) text.current.textContent = `${(a.distanceTo(hover) * WORLD_TO_METER).toFixed(2)}m`;
+  });
+
+  return (
+    <>
+      <line geometry={geom}>
+        <lineBasicMaterial color="#22ff88" transparent opacity={0.45} depthTest={false} />
+      </line>
+      <group ref={label}>
+        <Html center sprite style={{ pointerEvents: "none" }}>
+          <div
+            ref={text}
+            className="rounded bg-[#052]/50 px-1.5 py-0.5 text-[11px] text-[#22ff88] tabular-nums"
+          />
+        </Html>
+      </group>
     </>
   );
 }
