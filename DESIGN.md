@@ -29,7 +29,7 @@ Overlay
 1. `GaussianSplatPLYLoader`가 PLY를 파싱한다.
 2. `GaussianSplat`에 넣고 `rotation.x = -π/2`만 적용한다. 스케일은 건드리지 않는다.
 3. bounding sphere로 카메라를 맞춘다.
-4. `WebGPURenderer` + R3F `Canvas` (`dpr=[1,1]`, `frameloop="demand"`).
+4. `WebGPURenderer` + R3F `Canvas` (`dpr=[1,1]`).
 
 ## 측정 알고리즘
 
@@ -92,7 +92,6 @@ Overlay
 
 FPS·메모리 프로파일은 찍지 않았다. 숫자 없이 선택만 적는다.
 
-- `frameloop="demand"`: 유휴 시 루프 정지. 픽/카메라 변경 때 `invalidate`.
 - 픽은 전체 화면이 아니라 커서 1px scissor. splat 크기는 RT 해상도에 묶이므로 화면 크기는 유지한다.
 - `dpr=[1,1]`, antialias off. splat fill을 우선했다.
 - PLY는 메인 스레드 로드. 첫 대기와 파일 교체 시 버벅임은 여기로 본다. Worker/LOD/프로그레시브는 없음.
