@@ -16,14 +16,14 @@ const LINE_COLOR = "#fff";
 const GHOST_COLOR = "#22ff88";
 const GHOST_OPACITY = 0.45;
 
-export function Measure() {
+export function MeasureTool() {
   const gl = useThree((s) => s.gl);
   const hoverOn = useMeasureStore((s) => s.hoverOn);
   const draft = useMeasureStore((s) => s.draft);
-  const measurements = useMeasureStore((s) => s.measurements);
 
   useEffect(() => {
     const el = gl.domElement;
+    el.style.cursor = "crosshair";
     let down: { x: number; y: number; button: number } | null = null;
     let dragged = false;
 
@@ -40,7 +40,7 @@ export function Measure() {
       if (e.button === 2 && !dragged) useMeasureStore.getState().undo();
     };
     const onClick = (e: MouseEvent) => {
-      if (e.detail > 1 || dragged) return;
+      if (e.ctrlKey || e.detail > 1 || dragged) return;
       const { hoverOn: on, hover, addPoint } = useMeasureStore.getState();
       if (on) addPoint(hover);
     };
@@ -65,6 +65,7 @@ export function Measure() {
     el.addEventListener("dblclick", onDblClick);
     window.addEventListener("keydown", onKey);
     return () => {
+      el.style.cursor = "";
       el.removeEventListener("pointerdown", pointerdown);
       el.removeEventListener("pointerup", pointerup);
       el.removeEventListener("click", onClick);
@@ -72,34 +73,42 @@ export function Measure() {
       el.removeEventListener("contextmenu", onContext);
       el.removeEventListener("dblclick", onDblClick);
       window.removeEventListener("keydown", onKey);
+      useMeasureStore.getState().cancel();
     };
   }, [gl]);
-
-  const paths = [...measurements, draft];
 
   return (
     <>
       {hoverOn && <HoverDot />}
       {hoverOn && draft.length > 0 && <Ghost />}
-      {paths.map((pts, si) => (
-        <group key={si}>
-          {pts.map((p, i) => (
-            <Html
-              key={i}
-              position={p}
-              center
-              sprite
-              style={{ pointerEvents: "none" }}
-            >
-              <div className="size-2.5 rounded-full bg-white shadow-[0_0_0_2px_#052]" />
-            </Html>
-          ))}
-          {pts.slice(1).map((b, i) => (
-            <Segment key={i} a={pts[i]!} b={b} />
-          ))}
-        </group>
-      ))}
+      <Path pts={draft} />
     </>
+  );
+}
+
+export function Measurements() {
+  const measurements = useMeasureStore((s) => s.measurements);
+  return measurements.map((pts, i) => <Path key={i} pts={pts} />);
+}
+
+function Path({ pts }: { pts: Vector3[] }) {
+  return (
+    <group>
+      {pts.map((p, i) => (
+        <Html
+          key={i}
+          position={p}
+          center
+          sprite
+          style={{ pointerEvents: "none" }}
+        >
+          <div className="size-2.5 rounded-full bg-white shadow-[0_0_0_2px_#052]" />
+        </Html>
+      ))}
+      {pts.slice(1).map((b, i) => (
+        <Segment key={i} a={pts[i]!} b={b} />
+      ))}
+    </group>
   );
 }
 
