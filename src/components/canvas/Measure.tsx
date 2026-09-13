@@ -218,8 +218,8 @@ export function MeasureTool() {
 }
 
 export function Measurements() {
-  const measurements = useMeasureStore((s) => s.measurements);
-  return measurements.map((pts, i) => <Path key={i} pts={pts} />);
+  const sessions = useMeasureStore((s) => s.sessions);
+  return sessions.map((s) => <Path key={s.id} pts={s.points} />);
 }
 
 function Path({

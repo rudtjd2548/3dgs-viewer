@@ -38,6 +38,7 @@ export function OrbitPivot() {
   const gl = useThree((s) => s.gl);
   const controls = useThree((s) => s.controls) as OrbitControls | null;
   const showAxes = useToolStore((s) => s.showAxes);
+  const focusGen = useMeasureStore((s) => s.focusGen);
   const group = useRef<Group>(null);
   const axes = useMemo(
     () => [
@@ -64,6 +65,12 @@ export function OrbitPivot() {
     g.position.copy(controls.target);
     g.scale.setScalar(camera.position.distanceTo(controls.target) * 4);
   });
+
+  useEffect(() => {
+    if (!focusGen || !controls) return;
+    controls.target.copy(useMeasureStore.getState().focus);
+    controls.update();
+  }, [focusGen, controls]);
 
   useEffect(() => {
     const el = gl.domElement;
