@@ -9,14 +9,12 @@ import { SplatModel } from "./SplatModel";
 export function Scene() {
   const plyUrl = useLoadStore((s) => s.plyUrl);
   const measuring = useToolStore((s) => s.tool === "distance");
-  const showAxes = useToolStore((s) => s.showAxes);
   const showMeasurements = useToolStore((s) => s.showMeasurements);
-  const picking = measuring || showAxes;
 
   return (
     <>
       {plyUrl && <SplatModel url={plyUrl} />}
-      {picking && <HoverPick />}
+      <HoverPick />
       {measuring && <MeasureTool />}
       {showMeasurements && <Measurements />}
       <OrbitPivot />
