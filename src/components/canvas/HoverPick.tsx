@@ -84,9 +84,13 @@ export function HoverPick() {
     if (w < 1 || h < 1) return;
 
     const resized = b.rt.width !== w || b.rt.height !== h;
+    if (resized) {
+      b.rt.setSize(w, h);
+      return;
+    }
+
     const stale =
       p.dirty ||
-      resized ||
       !b.cam.equals(cam.matrixWorld) ||
       !b.proj.equals(cam.projectionMatrix);
     if (!stale) return;
@@ -94,7 +98,6 @@ export function HoverPick() {
     p.dirty = false;
     b.cam.copy(cam.matrixWorld);
     b.proj.copy(cam.projectionMatrix);
-    if (resized) b.rt.setSize(w, h);
 
     const splat = splatRef.current;
     const mat = splat.material;
