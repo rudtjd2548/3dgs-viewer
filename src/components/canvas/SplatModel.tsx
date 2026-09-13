@@ -5,6 +5,7 @@ import type { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GaussianSplatPLYLoader } from 'three/addons/loaders/GaussianSplatPLYLoader.js'
 import { GaussianSplat } from 'three/addons/objects/GaussianSplat.js'
 import { useLoadStore } from '../../store/useLoadStore'
+import { splatRef } from './pick'
 
 type SplatModelProps = {
   url: string
@@ -25,6 +26,8 @@ export function SplatModel({ url }: SplatModelProps) {
         if (cancelled) return
         splat = new GaussianSplat(geometry)
         splat.rotation.x = -Math.PI / 2
+        splat.raycast = () => {}
+        splatRef.current = splat
         scene.add(splat)
         splat.updateMatrixWorld()
 
@@ -55,6 +58,7 @@ export function SplatModel({ url }: SplatModelProps) {
 
     return () => {
       cancelled = true
+      if (splatRef.current === splat) splatRef.current = null
       if (splat) scene.remove(splat)
     }
   }, [url, scene, camera, controls])

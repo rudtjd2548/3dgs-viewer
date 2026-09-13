@@ -1,5 +1,6 @@
 import { OrbitControls } from '@react-three/drei'
 import { useLoadStore } from '../../store/useLoadStore'
+import { HoverPick } from './HoverPick'
 import { SplatModel } from './SplatModel'
 
 export function Scene() {
@@ -8,6 +9,7 @@ export function Scene() {
   return (
     <>
       {plyUrl && <SplatModel url={plyUrl} />}
+      <HoverPick />
       <OrbitControls makeDefault />
     </>
   )
