@@ -5,7 +5,7 @@ import { Line2NodeMaterial } from "three/webgpu";
 import type { Group, Vector3 } from "three/webgpu";
 import { Line2 } from "three/addons/lines/webgpu/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
-import { usePickStore } from "../../store/usePickStore";
+import { useMeasureStore } from "../../store/useMeasureStore";
 
 /** 월드 단위 → m. 실측 보정 전 1:1 */
 const WORLD_TO_METER = 1;
@@ -18,9 +18,9 @@ const GHOST_OPACITY = 0.45;
 
 export function Measure() {
   const gl = useThree((s) => s.gl);
-  const hoverOn = usePickStore((s) => s.hoverOn);
-  const draft = usePickStore((s) => s.draft);
-  const sessions = usePickStore((s) => s.sessions);
+  const hoverOn = useMeasureStore((s) => s.hoverOn);
+  const draft = useMeasureStore((s) => s.draft);
+  const measurements = useMeasureStore((s) => s.measurements);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -37,11 +37,11 @@ export function Measure() {
       const dy = e.offsetY - down.y;
       dragged = dx * dx + dy * dy > CLICK * CLICK;
       down = null;
-      if (e.button === 2 && !dragged) usePickStore.getState().undo();
+      if (e.button === 2 && !dragged) useMeasureStore.getState().undo();
     };
     const onClick = (e: MouseEvent) => {
       if (e.detail > 1 || dragged) return;
-      const { hoverOn: on, hover, addPoint } = usePickStore.getState();
+      const { hoverOn: on, hover, addPoint } = useMeasureStore.getState();
       if (on) addPoint(hover);
     };
     const leave = () => {
@@ -51,11 +51,11 @@ export function Measure() {
       e.preventDefault();
     };
     const onDblClick = () => {
-      usePickStore.getState().commit();
+      useMeasureStore.getState().commit();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter") usePickStore.getState().commit();
-      else if (e.key === "Escape") usePickStore.getState().cancel();
+      if (e.key === "Enter") useMeasureStore.getState().commit();
+      else if (e.key === "Escape") useMeasureStore.getState().cancel();
     };
     el.addEventListener("pointerdown", pointerdown);
     el.addEventListener("pointerup", pointerup);
@@ -75,7 +75,7 @@ export function Measure() {
     };
   }, [gl]);
 
-  const paths = [...sessions, draft];
+  const paths = [...measurements, draft];
 
   return (
     <>
@@ -168,7 +168,7 @@ function Ghost() {
   );
 
   useFrame(() => {
-    const { draft, hover } = usePickStore.getState();
+    const { draft, hover } = useMeasureStore.getState();
     const a = draft[draft.length - 1];
     if (!a) return;
     setSeg(line.geometry, a, hover);
@@ -201,7 +201,7 @@ function HoverDot() {
   const ring = useRef<SVGSVGElement>(null);
 
   useFrame(() => {
-    const { hover, hoverColor } = usePickStore.getState();
+    const { hover, hoverColor } = useMeasureStore.getState();
     obj.current?.position.copy(hover);
     if (ring.current)
       ring.current.style.color = `#${hoverColor.getHexString()}`;
@@ -211,7 +211,7 @@ function HoverDot() {
     <group
       ref={(g) => {
         obj.current = g;
-        if (g) g.position.copy(usePickStore.getState().hover);
+        if (g) g.position.copy(useMeasureStore.getState().hover);
       }}
     >
       <Html center sprite style={{ pointerEvents: "none" }}>

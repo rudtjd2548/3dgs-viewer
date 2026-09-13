@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { PerspectiveCamera, WebGPURenderer } from "three/webgpu";
 import { Matrix4 } from "three/webgpu";
-import { usePickStore } from "../../store/usePickStore";
+import { useMeasureStore } from "../../store/useMeasureStore";
 import {
   createPickTarget,
   readPick,
@@ -55,7 +55,7 @@ export function HoverPick() {
     const leave = () => {
       p.on = false;
       p.dirty = false;
-      usePickStore.getState().setHoverOn(false);
+      useMeasureStore.getState().setHoverOn(false);
     };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", leave);
@@ -67,7 +67,7 @@ export function HoverPick() {
       gl.setScissorTest(false);
       gl.setMRT(null);
       gl.setRenderTarget(null);
-      usePickStore.getState().setHoverOn(false);
+      useMeasureStore.getState().setHoverOn(false);
     };
   }, [gl]);
 
@@ -85,7 +85,10 @@ export function HoverPick() {
 
     const resized = b.rt.width !== w || b.rt.height !== h;
     const stale =
-      p.dirty || resized || !b.cam.equals(cam.matrixWorld) || !b.proj.equals(cam.projectionMatrix);
+      p.dirty ||
+      resized ||
+      !b.cam.equals(cam.matrixWorld) ||
+      !b.proj.equals(cam.projectionMatrix);
     if (!stale) return;
 
     p.dirty = false;
@@ -124,7 +127,7 @@ export function HoverPick() {
       gl.readRenderTargetPixelsAsync(b.rt, x, y, 1, 1, 1),
     ]).then(([depth, color]) => {
       b.busy = false;
-      const { hover, hoverColor, setHoverOn } = usePickStore.getState();
+      const { hover, hoverColor, setHoverOn } = useMeasureStore.getState();
       const viewZ = readPick(depth);
       const rgb = readPickColor(color);
       if (viewZ === null || rgb === null || !ptr.current.on) {

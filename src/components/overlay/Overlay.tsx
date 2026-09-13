@@ -2,6 +2,7 @@ import { useSplatLoader } from "../../hooks/useSplatLoader";
 import { useLoadStore } from "../../store/useLoadStore";
 import { FilePicker } from "./FilePicker";
 import { LoadingDonut } from "./LoadingDonut";
+import { Toolbar } from "./Toolbar";
 
 export function Overlay() {
   const { openFile, checked } = useSplatLoader();
@@ -16,6 +17,7 @@ export function Overlay() {
         <div className="pointer-events-auto absolute top-4 left-4">
           <FilePicker compact onFile={openFile} />
         </div>
+        <Toolbar />
       </div>
     );
   }
