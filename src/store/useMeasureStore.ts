@@ -3,6 +3,9 @@ import { create } from 'zustand'
 
 export type Measurement = Vector3[]
 
+export const isClosed = (pts: Vector3[]) =>
+  pts.length >= 4 && pts[0]!.equals(pts[pts.length - 1]!)
+
 type MeasureState = {
   /** 커서 스냅. 좌표·색은 mutate, 구독은 hoverOn만 */
   hover: Vector3
@@ -14,6 +17,7 @@ type MeasureState = {
   measurements: Measurement[]
   addPoint: (v: Vector3) => void
   commit: () => void
+  close: () => void
   cancel: () => void
   undo: () => void
 }
@@ -32,6 +36,15 @@ export const useMeasureStore = create<MeasureState>((set) => ({
       s.draft.length < 2
         ? { draft: [] }
         : { measurements: [...s.measurements, s.draft], draft: [] },
+    ),
+  close: () =>
+    set((s) =>
+      s.draft.length < 3
+        ? s
+        : {
+            measurements: [...s.measurements, [...s.draft, s.draft[0]!.clone()]],
+            draft: [],
+          },
     ),
   cancel: () => set((s) => (s.draft.length ? { draft: [] } : s)),
   undo: () => set((s) => (s.draft.length ? { draft: s.draft.slice(0, -1) } : s)),

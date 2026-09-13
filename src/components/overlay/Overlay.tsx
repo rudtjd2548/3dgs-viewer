@@ -14,7 +14,7 @@ export function Overlay() {
 
   if (ready) {
     return (
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 z-20">
         <div className="pointer-events-auto absolute top-4 left-4">
           <FilePicker compact onFile={openFile} />
         </div>
@@ -27,7 +27,7 @@ export function Overlay() {
   if (!checked && !plyUrl) return null;
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-neutral-950/80">
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-neutral-950/80">
       {error || !plyUrl ? (
         <>
           {error && <p className="text-sm text-red-400">{error}</p>}

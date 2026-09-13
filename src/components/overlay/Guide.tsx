@@ -11,6 +11,7 @@ function Kbd({ children }: { children: string }) {
 
 const ROWS: { key: ReactNode; desc: string }[] = [
   { key: "좌클릭", desc: "점 선택" },
+  { key: "첫 점 클릭", desc: "면적 확정 (3점+)" },
   { key: <>더블클릭 / <Kbd>Enter</Kbd></>, desc: "측정 종료" },
   { key: "우클릭", desc: "직전 점 취소" },
   { key: <Kbd>Esc</Kbd>, desc: "측정 취소" },
