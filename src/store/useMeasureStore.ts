@@ -67,6 +67,7 @@ type MeasureState = {
   setHoverOn: (on: boolean) => void
 
   focus: Vector3
+  focusRadius: number
   focusGen: number
   lookAt: (pts: Vector3[]) => void
 
@@ -90,6 +91,7 @@ export const useMeasureStore = create<MeasureState>((set) => ({
   setHoverOn: (hoverOn) => set((s) => (s.hoverOn === hoverOn ? s : { hoverOn })),
 
   focus: new Vector3(),
+  focusRadius: 0,
   focusGen: 0,
   lookAt: (pts) =>
     set((s) => {
@@ -98,7 +100,9 @@ export const useMeasureStore = create<MeasureState>((set) => ({
       s.focus.set(0, 0, 0)
       for (const p of ring) s.focus.add(p)
       s.focus.divideScalar(ring.length)
-      return { focusGen: s.focusGen + 1 }
+      let r = 0
+      for (const p of ring) r = Math.max(r, p.distanceTo(s.focus))
+      return { focusGen: s.focusGen + 1, focusRadius: r }
     }),
 
   draft: [],

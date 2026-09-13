@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Line2NodeMaterial } from "three/webgpu";
-import type { Group } from "three/webgpu";
+import type { Group, PerspectiveCamera } from "three/webgpu";
 import type { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/webgpu/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
@@ -36,6 +36,7 @@ function axisLine(color: string, axis: 0 | 1 | 2) {
 
 export function OrbitPivot() {
   const gl = useThree((s) => s.gl);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const controls = useThree((s) => s.controls) as OrbitControls | null;
   const showAxes = useToolStore((s) => s.showAxes);
   const focusGen = useMeasureStore((s) => s.focusGen);
@@ -68,9 +69,18 @@ export function OrbitPivot() {
 
   useEffect(() => {
     if (!focusGen || !controls) return;
-    controls.target.copy(useMeasureStore.getState().focus);
+    const { focus, focusRadius } = useMeasureStore.getState();
+    const vfov = (camera.fov * Math.PI) / 180;
+    const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+    const dist = focusRadius
+      ? focusRadius / Math.sin(Math.min(vfov, hfov) / 2)
+      : camera.position.distanceTo(controls.target);
+    const offset = camera.position.sub(controls.target);
+    if (offset.lengthSq() < 1e-12) offset.set(0, 0, 1);
+    offset.setLength(dist).add(focus);
+    controls.target.copy(focus);
     controls.update();
-  }, [focusGen, controls]);
+  }, [focusGen, controls, camera]);
 
   useEffect(() => {
     const el = gl.domElement;
