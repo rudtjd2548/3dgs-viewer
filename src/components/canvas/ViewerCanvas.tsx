@@ -14,6 +14,7 @@ export function ViewerCanvas() {
   return (
     <Canvas
       className="h-full w-full"
+      frameloop="demand"
       dpr={[1, 1]}
       camera={{ position: [3, 2, 4], fov: 50, near: 0.1, far: 10000 }}
       gl={async ({ canvas }) => {

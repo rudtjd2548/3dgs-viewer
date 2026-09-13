@@ -40,6 +40,7 @@ export function HoverPick() {
   const gl = useThree((s) => s.gl) as unknown as WebGPURenderer;
   const scene = useThree((s) => s.scene);
   const size = useThree((s) => s.size);
+  const invalidate = useThree((s) => s.invalidate);
   const ptr = useRef({ x: 0, y: 0, on: false, dirty: false });
   const bag = useRef<Bag | null>(null);
 
@@ -51,6 +52,7 @@ export function HoverPick() {
       p.y = e.offsetY;
       p.on = true;
       p.dirty = true;
+      invalidate();
     };
     const leave = () => {
       p.on = false;
@@ -69,7 +71,7 @@ export function HoverPick() {
       gl.setRenderTarget(null);
       useMeasureStore.getState().setHoverOn(false);
     };
-  }, [gl]);
+  }, [gl, invalidate]);
 
   useFrame(({ camera }) => {
     const p = ptr.current;
@@ -137,6 +139,7 @@ export function HoverPick() {
       hover.copy(unprojectView(cam, (x / w) * 2 - 1, 1 - (y / h) * 2, viewZ));
       hoverColor.setRGB(...rgb);
       setHoverOn(true);
+      invalidate();
     });
   });
 
