@@ -17,30 +17,53 @@ export function Measure() {
 
   useEffect(() => {
     const el = gl.domElement;
-    let down: { x: number; y: number } | null = null;
+    let down: { x: number; y: number; button: number } | null = null;
+    let dragged = false;
 
     const pointerdown = (e: PointerEvent) => {
-      if (e.button === 0) down = { x: e.offsetX, y: e.offsetY };
+      if (e.button === 0 || e.button === 2) down = { x: e.offsetX, y: e.offsetY, button: e.button };
     };
     const pointerup = (e: PointerEvent) => {
-      if (!down || e.button !== 0) return;
+      if (!down || e.button !== down.button) return;
       const dx = e.offsetX - down.x;
       const dy = e.offsetY - down.y;
+      dragged = dx * dx + dy * dy > CLICK * CLICK;
       down = null;
-      if (dx * dx + dy * dy > CLICK * CLICK) return;
+      if (e.button === 2 && !dragged) usePickStore.getState().undo();
+    };
+    const onClick = (e: MouseEvent) => {
+      if (e.detail > 1 || dragged) return;
       const { hoverOn: on, hover, addPoint } = usePickStore.getState();
       if (on) addPoint(hover);
     };
     const leave = () => {
       down = null;
     };
+    const onContext = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    const onDblClick = () => {
+      usePickStore.getState().commit();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") usePickStore.getState().commit();
+      else if (e.key === "Escape") usePickStore.getState().cancel();
+    };
     el.addEventListener("pointerdown", pointerdown);
     el.addEventListener("pointerup", pointerup);
+    el.addEventListener("click", onClick);
     el.addEventListener("pointerleave", leave);
+    el.addEventListener("contextmenu", onContext);
+    el.addEventListener("dblclick", onDblClick);
+    window.addEventListener("keydown", onKey);
     return () => {
       el.removeEventListener("pointerdown", pointerdown);
       el.removeEventListener("pointerup", pointerup);
+      el.removeEventListener("click", onClick);
       el.removeEventListener("pointerleave", leave);
+      el.removeEventListener("contextmenu", onContext);
+      el.removeEventListener("dblclick", onDblClick);
+      window.removeEventListener("keydown", onKey);
     };
   }, [gl]);
 

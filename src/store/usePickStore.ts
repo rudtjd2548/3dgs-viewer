@@ -9,6 +9,9 @@ type PickState = {
   draft: Vector3[]
   sessions: Vector3[][]
   addPoint: (v: Vector3) => void
+  commit: () => void
+  cancel: () => void
+  undo: () => void
 }
 
 export const usePickStore = create<PickState>((set) => ({
@@ -18,4 +21,10 @@ export const usePickStore = create<PickState>((set) => ({
   draft: [],
   sessions: [],
   addPoint: (v) => set((s) => ({ draft: [...s.draft, v.clone()] })),
+  commit: () =>
+    set((s) =>
+      s.draft.length < 2 ? { draft: [] } : { sessions: [...s.sessions, s.draft], draft: [] },
+    ),
+  cancel: () => set((s) => (s.draft.length ? { draft: [] } : s)),
+  undo: () => set((s) => (s.draft.length ? { draft: s.draft.slice(0, -1) } : s)),
 }))
